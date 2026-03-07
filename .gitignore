@@ -1,0 +1,57 @@
+# Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Dataset (too large to commit)
+dataset/
+
+# Model checkpoints & training outputs
+offroad_training_pipeline/checkpoints/
+offroad_training_pipeline/train_stats/
+offroad_training_pipeline/predictions/
+
+umixformer_pipeline/checkpoints/
+umixformer_pipeline/train_stats/
+umixformer_pipeline/predictions/
+
+# LIME / XAI outputs
+**/lime_explanations/
+
+# Torch hub cache
+.cache/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+
+# Logs
+*.log
+nohup.out
+
+# Documentation files
+AIML-PS (1).pdf
