@@ -1,4 +1,4 @@
-# 🏜️ Desert Perception System — ByteWorks | SPIT Hackathon 2026
+# 🏜️ Desert Perception System — ByteWorks 
 
 > **End-to-end autonomous perception for desert/off-road terrain** — Real-time semantic segmentation using U-MixFormer, hardware sensor fusion, and a full-stack cloud-deployed interface.
 
