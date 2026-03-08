@@ -1,11 +1,13 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
+import { useTheme } from "next-themes"
 import {
   PieChart,
   Pie,
   Cell,
+  Sector,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -65,6 +67,11 @@ export function StatisticsPanel({ isComplete, segResult }: StatisticsPanelProps)
     radarRandomFactor: getRandomFactor(),
     metricsImprovement: getRandomImprovement(),
   }), [])
+
+  // --- hooks that must run unconditionally ---
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
 
   if (!isComplete) return null
 
@@ -134,6 +141,55 @@ export function StatisticsPanel({ isComplete, segResult }: StatisticsPanelProps)
       fullMark: 100,
     };
   })
+
+  // ---- interactive pie chart helpers ----
+  const renderActiveShape = (props: any) => {
+    const {
+      cx,
+      cy,
+      innerRadius,
+      outerRadius,
+      startAngle,
+      endAngle,
+      fill,
+      payload,
+      percent,
+      value,
+    } = props;
+
+    return (
+      <g>
+        <text
+          x={cx}
+          y={cy - 14}
+          textAnchor="middle"
+          fill={isDark ? '#fff' : '#000'}
+          fontSize={11}
+        >
+          {payload.name}
+        </text>
+        <text
+          x={cx}
+          y={cy + 14}
+          textAnchor="middle"
+          fill={isDark ? '#fff' : '#000'}
+          fontSize={14}
+          fontWeight="bold"
+        >
+          {`${value.toFixed(1)}%`}
+        </text>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius}
+          outerRadius={outerRadius + 10}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+        />
+      </g>
+    );
+  };
 
   const liveInferenceMs = segResult ? `${segResult.inference_ms}ms` : `${Math.round(getRandomFactor() * 10)}ms`
 
@@ -224,32 +280,93 @@ export function StatisticsPanel({ isComplete, segResult }: StatisticsPanelProps)
             <h3 className="mb-4 text-sm font-semibold text-foreground">
               Class Distribution (%)
             </h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={liveClassData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {liveClassData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#0f1724",
-                    border: "1px solid #1e293b",
-                    borderRadius: 8,
-                    color: "#e2e8f0",
-                    fontSize: 12,
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+
+            {/* container with chart + legend */}
+            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
+              {/* chart wrapper: centre & enlarge */}
+              <div className="w-full lg:w-1/2 flex justify-center">
+                <ResponsiveContainer width="80%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={liveClassData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={70}
+                      outerRadius={100}
+                      paddingAngle={3}
+                      dataKey="value"
+                      activeIndex={activeIndex}
+                      activeShape={renderActiveShape}
+                      onMouseEnter={(_, index) => setActiveIndex(index)}
+                      onMouseLeave={() => setActiveIndex(-1)}
+                      onClick={(data, index) => {
+                        console.log('clicked', data.name, data.value)
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {liveClassData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    {/* total label in the center */}
+                    <text
+                      x="50%"
+                      y="50%"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill={isDark ? '#fff' : '#000'}
+                      fontSize={14}
+                      fontWeight="bold"
+                    >
+                      Total 100%
+                    </text>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: isDark ? '#0f1724' : '#fff',
+                        border: '1px solid ' + (isDark ? '#1e293b' : '#e2e8f0'),
+                        borderRadius: 8,
+                        color: isDark ? '#e2e8f0' : '#000',
+                        fontSize: 12,
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* legend grid */}
+              <div className="w-full lg:w-1/2">
+                <ul className="grid grid-cols-2 gap-2">
+                  {liveClassData.map((entry, idx) => {
+                    const active = idx === activeIndex;
+                    return (
+                      <li
+                        key={entry.name}
+                        onMouseEnter={() => setActiveIndex(idx)}
+                        onMouseLeave={() => setActiveIndex(-1)}
+                        onClick={() => console.log('legend click', entry.name)}
+                        className={`flex items-center gap-2 cursor-pointer text-xs px-2 py-1 rounded transition-colors ${
+                          active
+                            ? isDark
+                              ? 'bg-gray-600 text-white'
+                              : 'bg-gray-200 text-black'
+                            : isDark
+                            ? 'text-gray-300 hover:text-white'
+                            : 'text-gray-700 hover:text-black'
+                        }`}
+                      >
+                        <span
+                          className="inline-block h-2 w-2 rounded-full"
+                          style={{ backgroundColor: entry.fill }}
+                        />
+                        <span>
+                          {entry.name} {entry.value.toFixed(1)}%
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
           </motion.div>
 
           {/* Loss curve */}
